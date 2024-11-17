@@ -1,5 +1,5 @@
 import React from 'react';
-// import useState from 'react';
+import { useState } from 'react';
 import OpenAI from "openai";
 
 import {
@@ -13,46 +13,17 @@ import {
 import { z } from 'zod';
 import dedent from 'dedent'; 
 
-type NewsArticle = {
-  id: number;
-  title: string;
-  text: string;
-  summary: string;
-  url: string;
-  publish_date: string;
-  author: string;
-};
-
-// let lastFetchedNews: NewsArticle[] = [
-//   // {
-//   //   id: 1,
-//   //   title: "Beyond the Ballot: Shaping U.S.-Pakistan Ties in the Wake of the 2024 Election",
-//   //   text: "",
-//   //   summary: "",
-//   //   url: "https://dailytimes.com.pk/1234928/beyond-the-ballot-shaping-u-s-pakistan-ties-in-the-wake-of-the-2024-election/",
-//   //   publish_date: "2024-10-28 10:15:41",
-//   //   author: "Noor Ul Ain",
-//   // },
-//   // {
-//   //   id: 2,
-//   //   title: "What would a Trump or Harris presidency mean for Pakistan?",
-//   //   text: "",
-//   //   summary: "",
-//   //   url: "https://www.dawn.com/news/1867350/what-would-a-trump-or-harris-presidency-mean-for-pakistan",
-//   //   publish_date: "2024-10-28 08:17:25",
-//   //   author: "Uzair M. Younus",
-//   // }
-// ]; // Store news for follow-up questions
-
 const NewsAssistant = () => {
 
-  const [shortNews, setShortNews] = React.useState('');
-  const [lastFetchedNews, setLastFetchedNews] = React.useState([]);
+  const [shortNews, setShortNews] = useState('');
+  // const [lastFetchedNews, setLastFetchedNews] = useState([]);
+
+  let lastFetchedNews = [];
     
   const fetchNews = async (text: string, language: string) => {
-
-    // let newsUrl = 'https://api.worldnewsapi.com/search-news?text=${text}&language=${language}';
-    let newsUrl = `http://localhost:8000/search-news?text=${text}&language=${language}`;
+    let newsUrl = 'https://api.worldnewsapi.com/search-news?text=${text}&language=${language}';
+    // let newsUrl = `http://localhost:8000/search-news?text=${text}&language=${language}`;
+    
     const api_key = "8e233fda6d8e48a6af211c9435838589";
   
     const headers = {
@@ -73,7 +44,13 @@ const NewsAssistant = () => {
       author: article.author
     }));
 
-    setLastFetchedNews(news);
+    // console.log('news : ');
+    // console.log(news);
+
+    // setLastFetchedNews(news);
+    lastFetchedNews = news;
+    console.log('lastFetchedNews : ');
+    console.log(lastFetchedNews);
 
     // Format the response for display
     const formattedNews = news
@@ -87,8 +64,6 @@ const NewsAssistant = () => {
   };
 
   const followUpNews = async (followUpQuestion: string) => {
-    console.log('lastFetchedNews : ');
-    console.log(lastFetchedNews);
 
     const openai = new OpenAI();
     const completion = await openai.chat.completions.create({
@@ -96,7 +71,7 @@ const NewsAssistant = () => {
       messages: [
           { 
             role: "system", 
-            content: "You are a helpful assistant. Your response should be in JSON format with only one key : ArticleId" 
+            content: "You are a helpful assistant. Your response should be in JSON format with only one key : ArticleId: integer" 
           },
           {
               role: "user",
@@ -105,10 +80,20 @@ const NewsAssistant = () => {
         ],
       });
 
-    console.log('completion.choices[0].message : ');
-    console.log(completion.choices[0].message.content);
-    let articleId = completion.choices[0].message.content['ArticleId'];
-    return lastFetchedNews[articleId - 1];
+    // Parse the JSON response from OpenAI
+    const responseContent = JSON.parse(completion.choices[0].message.content);
+    const articleId = responseContent.ArticleId;
+
+    // Find the matching article
+    const article = lastFetchedNews.find(article => article.id === articleId);
+    console.log('matching article : ');
+    console.log(article);
+    
+    if (!article) {
+        return "Article not found";
+    }
+
+    return article.text;
   }
 
   return (
@@ -133,6 +118,7 @@ const NewsAssistant = () => {
             
             const { text, language } = e.data.message.args as { text: string, language: string };
             const news =await fetchNews(text, language);
+
             const monologueString = dedent`\
               Your character fetched details about news articles relating to a specific topic and discovered the following:
             ` + '\n\n' + news;

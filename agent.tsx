@@ -21,7 +21,7 @@ const NewsAssistant = () => {
   let lastFetchedNews = [];
     
   const fetchNews = async (text: string, language: string) => {
-    let newsUrl = 'https://api.worldnewsapi.com/search-news?text=${text}&language=${language}';
+    let newsUrl = `https://api.worldnewsapi.com/search-news?text=${text}&language=${language}`;
     // let newsUrl = `http://localhost:8000/search-news?text=${text}&language=${language}`;
     
     const api_key = "8e233fda6d8e48a6af211c9435838589";
@@ -49,8 +49,8 @@ const NewsAssistant = () => {
 
     // setLastFetchedNews(news);
     lastFetchedNews = news;
-    console.log('lastFetchedNews : ');
-    console.log(lastFetchedNews);
+    // console.log('lastFetchedNews : ');
+    // console.log(lastFetchedNews);
 
     // Format the response for display
     const formattedNews = news
@@ -86,8 +86,8 @@ const NewsAssistant = () => {
 
     // Find the matching article
     const article = lastFetchedNews.find(article => article.id === articleId);
-    console.log('matching article : ');
-    console.log(article);
+    // console.log('matching article : ');
+    // console.log(article);
     
     if (!article) {
         return "Article not found";

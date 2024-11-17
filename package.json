@@ -1,6 +1,7 @@
 {
   "name": "my-agent",
   "dependencies": {
+    "openai": "^4.72.0",
     "upstreet-agent": "file:./packages/upstreet-agent"
   }
 }
